@@ -135,6 +135,16 @@
                                 $appointmentrow = $database->query("select  * from  appointment where appodate>='$today';");
                                 $schedulerow = $database->query("select  * from  schedule where scheduledate='$today';");
 
+                                // NEW: Get doctors with sessions today or upcoming
+                                $availabledoctors = $database->query("
+                                    SELECT DISTINCT doctor.docid, doctor.docname, doctor.docemail, doctor.specialties,
+                                    schedule.scheduledate, schedule.scheduletime, schedule.title, schedule.scheduleid
+                                    FROM doctor 
+                                    INNER JOIN schedule ON doctor.docid = schedule.docid
+                                    WHERE schedule.scheduledate >= '$today'
+                                    ORDER BY schedule.scheduledate ASC, schedule.scheduletime ASC
+                                    LIMIT 4
+                                ");
 
                                 ?>
                                 </p>
@@ -182,7 +192,7 @@
                                 
                            
                                 <input type="Submit" value="Search" class="login-btn btn-primary btn" style="padding-left: 25px;padding-right: 25px;padding-top: 10px;padding-bottom: 10px;">
-                            
+                            </form>
                             <br>
                             <br>
                             
@@ -193,9 +203,62 @@
                     
                 </td>
                 </tr>
+
+                <!-- Recommended Doctors Section - OUTSIDE CONTAINER -->
+                <tr>
+                    <td colspan="4" style="padding: 20px 0;">
+                        <center>
+                            <div style="width: 95%;">
+                                <p style="font-size: 20px;font-weight:600;padding-left: 12px;margin-bottom: 15px;">Recommended Doctors</p>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                                    <?php
+                                    if($availabledoctors->num_rows == 0) {
+                                        echo '<p style="color: rgb(119, 119, 119); grid-column: 1 / -1; text-align: center;">No doctors available at the moment</p>';
+                                    } else {
+                                        while($doc = $availabledoctors->fetch_assoc()) {
+                                            $docid = $doc["docid"];
+                                            $docname = $doc["docname"];
+                                            $specialties = $doc["specialties"];
+                                            $scheduledate = $doc["scheduledate"];
+                                            $scheduletime = $doc["scheduletime"];
+                                            $scheduleid = $doc["scheduleid"];
+                                            
+                                            echo '
+                                            <div class="dashboard-items" style="padding:20px;display: flex;flex-direction: column;justify-content: space-between;min-height: 180px;">
+                                                <div>
+                                                    <div style="display: flex;align-items: center;margin-bottom: 15px;">
+                                                        <div style="width:60px;height:60px;margin-right:15px;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                                                            <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                                <circle cx="8.5" cy="7" r="4"></circle>
+                                                                <polyline points="17 11 19 13 23 9"></polyline>
+                                                            </svg>
+                                                        </div>
+                                                        <div style="flex-grow: 1;">
+                                                            <p style="font-size: 18px;font-weight: 600;margin: 0;color: #2c3e50;">'.htmlspecialchars($docname).'</p>
+                                                            <p style="font-size: 14px;color: rgb(119, 119, 119);margin: 5px 0 0 0;">'.htmlspecialchars($specialties).'</p>
+                                                        </div>
+                                                    </div>
+                                                    <p style="font-size: 13px;color: rgb(49, 49, 49);margin: 0 0 15px 0;line-height: 1.5;">
+                                                        <b>📅 Next Session:</b><br>'.date("M d, Y", strtotime($scheduledate)).' at '.date("g:i A", strtotime($scheduletime)).'
+                                                    </p>
+                                                </div>
+                                                <a href="booking.php?id='.$scheduleid.'" style="width: 100%;">
+                                                    <button class="login-btn btn-primary btn" style="padding: 12px 20px; width: 100%;">Book Now</button>
+                                                </a>
+                                            </div>';
+                                        }
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                        </center>
+                    </td>
+                </tr>
+
                 <tr>
                     <td colspan="4">
-                        <table border="0" width="100%"">
+                        <table border="0" width="100%">
                             <tr>
                                 <td width="50%">
 
